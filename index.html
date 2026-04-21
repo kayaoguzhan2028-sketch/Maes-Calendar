@@ -99,7 +99,7 @@ body { background: var(--bg); color: var(--text); font-family: 'Space Grotesk', 
 .half-line { position: absolute; top: 50%; left: 0; right: 0; border-top: 1px dashed rgba(255,255,255,0.04); pointer-events: none; }
 .block.faded { opacity: 0.9; filter: none; }
 .block.faded > * { position: relative; z-index: 1; }
-.block.faded::after { content: ''; position: absolute; inset: 0; z-index: 0; background: repeating-linear-gradient(-45deg, rgba(0,0,0,0.28) 0, rgba(0,0,0,0.28) 2px, transparent 2px, transparent 7px); border-radius: 4px; pointer-events: none; }
+.block.faded::after { content: ''; position: absolute; inset: 0; z-index: 0; background: repeating-linear-gradient(-45deg, rgba(0,0,0,0.22) 0, rgba(0,0,0,0.22) 2px, transparent 2px, transparent 7px), repeating-linear-gradient(45deg, rgba(0,0,0,0.22) 0, rgba(0,0,0,0.22) 2px, transparent 2px, transparent 7px); border-radius: 4px; pointer-events: none; }
 .subtask-node.faded-node { opacity: 0.4; filter: grayscale(0.8); }
 
 /* BLOCKS */
