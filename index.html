@@ -99,7 +99,7 @@ body { background: var(--bg); color: var(--text); font-family: 'Space Grotesk', 
 .half-line { position: absolute; top: 50%; left: 0; right: 0; border-top: 1px dashed rgba(255,255,255,0.04); pointer-events: none; }
 .block.faded { opacity: 0.9; filter: none; }
 .block.faded > * { position: relative; z-index: 1; }
-.block.faded::after { content: ''; position: absolute; inset: 0; z-index: 0; background: repeating-linear-gradient(-45deg, rgba(0,0,0,0.22) 0, rgba(0,0,0,0.22) 2px, transparent 2px, transparent 7px), repeating-linear-gradient(45deg, rgba(0,0,0,0.22) 0, rgba(0,0,0,0.22) 2px, transparent 2px, transparent 7px); border-radius: 4px; pointer-events: none; }
+.block.faded::after { content: ''; position: absolute; inset: 0; z-index: 0; background: repeating-linear-gradient(-45deg, rgba(0,0,0,0.22) 0, rgba(0,0,0,0.22) 1px, transparent 1px, transparent 1px), repeating-linear-gradient(45deg, rgba(0,0,0,0.22) 0, rgba(0,0,0,0.22) 1px, transparent 1px, transparent 1px); border-radius: 4px; pointer-events: none; }
 .subtask-node.faded-node { opacity: 0.4; filter: grayscale(0.8); }
 
 /* BLOCKS */
@@ -409,27 +409,69 @@ function setLegendTab(tab){
 
 function renderLegend(){
   const el=document.getElementById('legendList');
-  let filtered=tasks.filter(t=>legendTab==='archive'?t.archived:!t.archived);
-  if(legendTab==='archive') filtered=[...filtered].sort((a,b)=>a.title.localeCompare(b.title,'tr'));
-  if(!filtered.length){el.innerHTML=`<div style="padding:16px 12px;font-size:10px;color:var(--text-dim)">${legendTab==='archive'?'Arşiv boş.':'Henüz görev yok.'}</div>`;return;}
-  el.innerHTML=filtered.map(t=>{
-    const subs=subtasks.filter(s=>s.task_id===t.id);
-    return `<div class="task-node">
-      <div class="task-node-header" draggable="true" ondragstart="onLegendDragStart(event,'task','${t.id}')" ondragend="onLegendDragEnd()" onclick="toggleTaskNode('tn-${t.id}',this)">
-        <div class="node-ring" style="color:${t.color}"><div class="node-ring-inner"></div></div>
-        <span class="task-name">${t.title}</span>
-        <span class="task-toggle">›</span>
-      </div>
-      <div class="subtask-list" id="tn-${t.id}">
-        ${subs.map(s=>`<div class="subtask-node${s.archived?' faded-node':''}" draggable="true" ondragstart="onLegendDragStart(event,'subtask','${s.id}','${t.id}')" ondragend="onLegendDragEnd()" onclick="event.stopPropagation();openSubtaskModal('${t.id}','${s.id}')">
-          <div class="subtask-ring" style="color:${s.color}"></div>
-          <span class="subtask-name">${s.title}</span>
-        </div>`).join('')}
-        <div class="add-sub-btn" onclick="openSubtaskModal('${t.id}')"><span>＋</span><span>alt görev</span></div>
-        <div class="add-sub-btn" onclick="openTaskModal('${t.id}')"><span>✎</span><span>düzenle</span></div>
-      </div>
-    </div>`;
-  }).join('');
+  const isArchive=legendTab==='archive';
+
+  const subNode=(s,t)=>`<div class="subtask-node" draggable="true" ondragstart="onLegendDragStart(event,'subtask','${s.id}','${t.id}')" ondragend="onLegendDragEnd()" onclick="event.stopPropagation();openSubtaskModal('${t.id}','${s.id}')">
+    <div class="subtask-ring" style="color:${s.color}"></div>
+    <span class="subtask-name">${s.title}</span>
+  </div>`;
+
+  let html='';
+
+  if(isArchive){
+    // Arşivlenmiş taskler
+    const archivedTasks=tasks.filter(t=>t.archived).sort((a,b)=>a.title.localeCompare(b.title,'tr'));
+    archivedTasks.forEach(t=>{
+      const subs=subtasks.filter(s=>s.task_id===t.id);
+      html+=`<div class="task-node">
+        <div class="task-node-header" draggable="true" ondragstart="onLegendDragStart(event,'task','${t.id}')" ondragend="onLegendDragEnd()" onclick="toggleTaskNode('tn-${t.id}',this)">
+          <div class="node-ring" style="color:${t.color}"><div class="node-ring-inner"></div></div>
+          <span class="task-name">${t.title}</span>
+          <span class="task-toggle">›</span>
+        </div>
+        <div class="subtask-list" id="tn-${t.id}">
+          ${subs.map(s=>subNode(s,t)).join('')}
+          <div class="add-sub-btn" onclick="openTaskModal('${t.id}')"><span>✎</span><span>düzenle</span></div>
+        </div>
+      </div>`;
+    });
+    // Aktif task altındaki arşivlenmiş subtaskler
+    tasks.filter(t=>!t.archived).forEach(t=>{
+      const archivedSubs=subtasks.filter(s=>s.task_id===t.id&&s.archived);
+      if(!archivedSubs.length) return;
+      html+=`<div class="task-node">
+        <div class="task-node-header" onclick="toggleTaskNode('tna-${t.id}',this)">
+          <div class="node-ring" style="color:${t.color}"><div class="node-ring-inner"></div></div>
+          <span class="task-name" style="opacity:.6">${t.title}</span>
+          <span class="task-toggle">›</span>
+        </div>
+        <div class="subtask-list" id="tna-${t.id}">
+          ${archivedSubs.map(s=>subNode(s,t)).join('')}
+        </div>
+      </div>`;
+    });
+    if(!html) html=`<div style="padding:16px 12px;font-size:10px;color:var(--text-dim)">Arşiv boş.</div>`;
+  } else {
+    // Aktif taskler — arşivlenmemiş subtask'ler
+    const activeTasks=tasks.filter(t=>!t.archived);
+    if(!activeTasks.length){el.innerHTML=`<div style="padding:16px 12px;font-size:10px;color:var(--text-dim)">Henüz görev yok.</div>`;return;}
+    activeTasks.forEach(t=>{
+      const subs=subtasks.filter(s=>s.task_id===t.id&&!s.archived);
+      html+=`<div class="task-node">
+        <div class="task-node-header" draggable="true" ondragstart="onLegendDragStart(event,'task','${t.id}')" ondragend="onLegendDragEnd()" onclick="toggleTaskNode('tn-${t.id}',this)">
+          <div class="node-ring" style="color:${t.color}"><div class="node-ring-inner"></div></div>
+          <span class="task-name">${t.title}</span>
+          <span class="task-toggle">›</span>
+        </div>
+        <div class="subtask-list" id="tn-${t.id}">
+          ${subs.map(s=>subNode(s,t)).join('')}
+          <div class="add-sub-btn" onclick="openSubtaskModal('${t.id}')"><span>＋</span><span>alt görev</span></div>
+          <div class="add-sub-btn" onclick="openTaskModal('${t.id}')"><span>✎</span><span>düzenle</span></div>
+        </div>
+      </div>`;
+    });
+  }
+  el.innerHTML=html;
 }
 
 function toggleTaskNode(id,header){
