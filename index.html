@@ -712,9 +712,12 @@ async function deleteTask(){
 async function toggleArchiveTask(){
   if(!editingTaskId) return;
   const t=tasks.find(x=>x.id===editingTaskId);if(!t)return;
+  const prev=t.archived;
   t.archived=!t.archived;
-  await sb.from('tasks').update({archived:t.archived}).eq('id',editingTaskId);
-  closeOverlay('taskOverlay');render();
+  const {error}=await sb.from('tasks').update({archived:t.archived}).eq('id',editingTaskId);
+  if(error){t.archived=prev;alert('Hata: '+error.message);return;}
+  closeOverlay('taskOverlay');
+  setLegendTab(t.archived?'archive':'active');
 }
 
 // ── SUBTASK MODAL ──
