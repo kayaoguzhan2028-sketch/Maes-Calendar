@@ -2,10 +2,11 @@
 <html lang="tr">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="theme-color" content="#080808">
 <meta name="mobile-web-app-capable" content="yes">
 <title>Planner</title>
+<link rel="icon" type="image/png" href="logo.png">
 <link rel="manifest" href="manifest.json">
 <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet">
 <style>
@@ -166,10 +167,73 @@ body { background: var(--bg); color: var(--text); font-family: 'Space Grotesk', 
 .subtask-opt-name { font-size: 11px; }
 ::-webkit-scrollbar { width: 3px; height: 3px; }
 ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+/* GİRİŞ EKRANI TASARIMI */
+#authOverlay {
+  position: fixed;
+  inset: 0;
+  background: var(--bg);
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 20px;
+}
+.auth-card {
+  background: var(--s1);
+  padding: 40px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  text-align: center;
+  width: 100%;
+  max-width: 320px;
+}
+.auth-title {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 14px;
+  color: var(--accent);
+  margin-bottom: 20px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+}
+.auth-input {
+  width: 100%;
+  background: var(--s3);
+  border: 1px solid var(--border);
+  padding: 12px;
+  color: white;
+  text-align: center;
+  font-size: 18px;
+  border-radius: 8px;
+  margin-bottom: 15px;
+  outline: none;
+}
+.auth-input:focus {
+  border-color: var(--accent);
+}
+.auth-btn {
+  background: var(--accent);
+  color: #000;
+  border: none;
+  padding: 12px;
+  width: 100%;
+  border-radius: 8px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: 'Space Grotesk', sans-serif;
+}
 </style>
 </head>
 <body>
-
+<div id="authOverlay">
+  <div class="auth-card">
+    <img src="logo.png" alt="Logo" style="width: 80px; height: 80px; margin-bottom: 20px; border-radius: 50%;">
+    
+    <div class="auth-title">SİSTEME GİRİŞ</div>
+    <input type="password" id="passInput" class="auth-input" placeholder="Şifre Giriniz">
+    <button class="auth-btn" onclick="checkMasterPassword()">GİRİŞ YAP</button>
+  </div>
+</div>
 <div class="drag-ghost" id="dragGhost"></div>
 <div class="select-bar" id="selectBar">
   <span id="selectBarText">0 saat seçili</span>
@@ -258,6 +322,32 @@ body { background: var(--bg); color: var(--text); font-family: 'Space Grotesk', 
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
+  // ŞİFRE KONTROLÜ
+const MASTER_PASS = "31131231";
+
+function checkMasterPassword() {
+  const input = document.getElementById('passInput').value;
+  if (input === MASTER_PASS) {
+    document.getElementById('authOverlay').style.display = 'none';
+    sessionStorage.setItem('isLoggedIn', 'true');
+  } else {
+    alert("Hatalı şifre!");
+  }
+}
+
+// Sayfa yenilendiğinde tekrar sormasın istiyorsan (oturum boyu):
+window.onload = function() {
+  if (sessionStorage.getItem('isLoggedIn') === 'true') {
+    document.getElementById('authOverlay').style.display = 'none';
+  }
+}
+
+// Enter tuşuyla girişi sağla
+document.addEventListener('keypress', function (e) {
+  if (e.key === 'Enter' && document.getElementById('authOverlay').style.display !== 'none') {
+    checkMasterPassword();
+  }
+});
 const SUPABASE_URL = 'https://dxgwgenzrebnmwzhwhck.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR4Z3dnZW56cmVibm13emh3aGNrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY2ODE2MTUsImV4cCI6MjA5MjI1NzYxNX0.6gqao9BkUM-a_ajGc09QFyGMz4yqYlpNMANV8cZb8pA';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
@@ -278,6 +368,7 @@ let editingTaskId=null, editingSubtaskParentId=null, editingSubtaskId=null, edit
 let pendingBlockDate=null;
 let selectedBlockSubtaskId=null;
 let dragData=null;
+let shiftPressed=false;
 let selectedCells=[];
 
 // ── UTILS ──
@@ -288,6 +379,8 @@ function fmtWeek(ws){const we=addDays(ws,6);return `${ws.toLocaleDateString('tr-
 function darken(hex,pct=0.62){const n=parseInt(hex.replace('#',''),16);const r=Math.max(0,(n>>16)-Math.round(255*pct));const g=Math.max(0,((n>>8)&255)-Math.round(255*pct));const b=Math.max(0,(n&255)-Math.round(255*pct));return `rgb(${r},${g},${b})`;}
 // Local time ISO string üretir — timezone offset olmadan kaydeder
 function toLocalISO(d){return `${toISO(d)}T${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}:${String(d.getSeconds()).padStart(2,'0')}`;}
+// Supabase'in UTC timestamp'lerini local time olarak parse eder (+3 kaymasını önler)
+function parseTime(str){if(!str)return new Date();return new Date(str.replace(/(\+\d{2}:\d{2}|Z)$/,'').replace(' ','T'));}
 
 // ── DATA ──
 async function loadAll(){
@@ -376,7 +469,7 @@ function renderBlocks(){
   document.querySelectorAll('.block').forEach(b=>b.remove());
   const weekDates=Array.from({length:7},(_,i)=>toISO(addDays(weekStart,i)));
   blocks.forEach(block=>{
-    const start=new Date(block.start_time),end=new Date(block.end_time);
+    const start=parseTime(block.start_time),end=parseTime(block.end_time);
     const iso=toISO(start);
     if(!weekDates.includes(iso)) return;
     const col=document.getElementById(`dc-${iso}`);
@@ -392,13 +485,14 @@ function renderBlocks(){
     const height=Math.max(((ec-sc)/60)*HOUR_H,18);
     const durMin=endMin-startMin;
     const dur=durMin>=60?`${Math.floor(durMin/60)}s${durMin%60>0?' '+durMin%60+'d':''}`:durMin+'d';
-    const bg=darken(task.color);
+    const displayColor=sub?sub.color:task.color;
+    const bg=darken(displayColor);
     const isFaded=task.archived||(sub&&sub.archived);
     const el=document.createElement('div');
     el.className='block'+(isFaded?' faded':'');el.dataset.blockId=block.id;
     el.style.cssText=`top:${top}px;height:${height}px;background:${bg};`;
     el.draggable=true;
-    el.innerHTML=`<div class="block-nodes"><div class="block-outer-node" style="color:${task.color}">${sub?`<div class="block-inner-node" style="color:${sub.color}"></div>`:''}</div></div><div class="block-title" style="color:${task.color}">${task.title}</div>${sub?`<div class="block-sub" style="color:${sub.color}">${sub.title}</div>`:''}<div class="block-dur">${dur}</div>`;
+    el.innerHTML=`<div class="block-nodes"><div class="block-outer-node" style="color:${task.color}">${sub?`<div class="block-inner-node" style="color:${sub.color}"></div>`:''}</div></div><div class="block-title" style="color:${task.color};opacity:${sub?0.65:1}">${task.title}</div>${sub?`<div class="block-sub" style="color:${sub.color};font-size:10px;font-weight:500">${sub.title}</div>`:''}<div class="block-dur">${dur}</div>`;
     el.addEventListener('click',e=>{e.stopPropagation();openBlockModal(null,null,null,block.id);});
     el.addEventListener('dragstart',e=>onBlockDragStart(e,block.id));
     el.addEventListener('dragend',onBlockDragEnd);
@@ -429,11 +523,14 @@ function renderMonth(){
   html+=`</div><div class="month-grid">`;
 
   const renderCell=(iso,num,other,isToday)=>{
-    const dayBlocks=blocks.filter(b=>toISO(new Date(b.start_time))===iso);
+    const dayBlocks=blocks.filter(b=>toISO(parseTime(b.start_time))===iso);
     const MAX=3;
     let bhtml=dayBlocks.slice(0,MAX).map(b=>{
       const t=tasks.find(x=>x.id===b.task_id);if(!t)return '';
-      return `<div class="mc-block" style="background:${darken(t.color,0.55)};color:${t.color}" onclick="onMonthBlockClick(event,'${b.id}')">${t.title}</div>`;
+      const sub=b.subtask_id?subtasks.find(s=>s.id===b.subtask_id):null;
+      const label=sub?`<span style="opacity:.7">${t.title}</span> · ${sub.title}`:t.title;
+      const dotColor=sub?sub.color:t.color;
+      return `<div class="mc-block" style="background:${darken(t.color,0.55)};color:${dotColor}" onclick="onMonthBlockClick(event,'${b.id}')">${label}</div>`;
     }).join('');
     if(dayBlocks.length>MAX) bhtml+=`<div class="mc-more">+${dayBlocks.length-MAX}</div>`;
     return `<div class="month-cell${other?' other-month':''}${isToday?' today':''}" onclick="onMonthCellClick('${iso}')"><div class="mc-num">${num}</div><div class="mc-blocks">${bhtml}</div></div>`;
@@ -523,14 +620,17 @@ document.addEventListener('dragover',e=>{
 
 // ── BLOCK DRAG ──
 function onBlockDragStart(e,blockId){
-  dragData={type:'block',blockId};e.dataTransfer.effectAllowed='move';
+  dragData={type:'block',blockId};e.dataTransfer.effectAllowed='copyMove';
+  const block=blocks.find(b=>b.id===blockId);
+  if(block){const task=tasks.find(t=>t.id===block.task_id);if(task){const g=document.getElementById('dragGhost');g.style.display='block';g.style.background=darken(task.color,0.5);g.style.color=task.color;g.textContent=task.title;}}
   setTimeout(()=>e.target.classList.add('dragging'),0);
 }
 function onBlockDragEnd(e){
   e.target.classList.remove('dragging');dragData=null;
+  document.getElementById('dragGhost').style.display='none';
   document.querySelectorAll('.drag-over').forEach(el=>el.classList.remove('drag-over'));
 }
-function onCellDragOver(e){e.preventDefault();e.currentTarget.classList.add('drag-over');}
+function onCellDragOver(e){e.preventDefault();e.dataTransfer.dropEffect=shiftPressed?'copy':'move';e.currentTarget.classList.add('drag-over');}
 function onCellDragLeave(e){e.currentTarget.classList.remove('drag-over');}
 
 async function onCellDrop(e,iso,hour){
@@ -539,11 +639,19 @@ async function onCellDrop(e,iso,hour){
 
   if(dragData.type==='block'){
     const block=blocks.find(b=>b.id===dragData.blockId);if(!block)return;
-    const dur=new Date(block.end_time)-new Date(block.start_time);
+    const dur=parseTime(block.end_time)-parseTime(block.start_time);
     const newStart=new Date(`${iso}T${String(hour).padStart(2,'0')}:00:00`);
     const newEnd=new Date(newStart.getTime()+dur);
-    await sb.from('blocks').update({start_time:toLocalISO(newStart),end_time:toLocalISO(newEnd)}).eq('id',block.id);
-    block.start_time=toLocalISO(newStart);block.end_time=toLocalISO(newEnd);
+    const payload={start_time:toLocalISO(newStart),end_time:toLocalISO(newEnd)};
+    if(shiftPressed){
+      // Shift basılı → kopyala (orijinal kalır)
+      const copy={...block,...payload,id:undefined};
+      const {data}=await sb.from('blocks').insert(copy).select().single();
+      if(data) blocks.push(data);
+    } else {
+      await sb.from('blocks').update(payload).eq('id',block.id);
+      block.start_time=payload.start_time;block.end_time=payload.end_time;
+    }
     renderBlocks();renderNowLine();
 
   } else if(dragData.type==='legend-task'||dragData.type==='legend-sub'){
@@ -663,7 +771,7 @@ function openBlockModal(iso,_u,hour,editId,preTaskId=null,preSubId=null,endHour=
   const sel=document.getElementById('blockTask');
   sel.innerHTML=tasks.filter(t=>!t.archived).map(t=>`<option value="${t.id}">${t.title}</option>`).join('');
   if(block){
-    const s=new Date(block.start_time),e=new Date(block.end_time);
+    const s=parseTime(block.start_time),e=parseTime(block.end_time);
     sel.value=block.task_id;
     document.getElementById('blockStart').value=`${String(s.getHours()).padStart(2,'0')}:${String(s.getMinutes()).padStart(2,'0')}`;
     document.getElementById('blockEnd').value=`${String(e.getHours()).padStart(2,'0')}:${String(e.getMinutes()).padStart(2,'0')}`;
@@ -735,8 +843,10 @@ function closeIfOutside(e,id){if(e.target.id===id)closeOverlay(id);}
 
 // ── KEYBOARD ──
 document.addEventListener('keydown',e=>{
+  if(e.key==='Shift') shiftPressed=true;
   if(e.key==='Escape'){['taskOverlay','subtaskOverlay','blockOverlay'].forEach(closeOverlay);clearSelection();}
 });
+document.addEventListener('keyup',e=>{if(e.key==='Shift') shiftPressed=false;});
 
 // ── INIT ──
 loadAll();
