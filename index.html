@@ -316,6 +316,7 @@ body { background: var(--bg); color: var(--text); font-family: 'Space Grotesk', 
     <div class="fg"><label class="flabel">Not</label><textarea class="ftextarea" id="blockNotes" placeholder="Açıklama..."></textarea></div>
     <div class="modal-actions">
       <button class="btn btn-danger" id="blockDeleteBtn" onclick="deleteBlock()" style="display:none">Sil</button>
+      <button class="btn btn-archive" id="blockArchiveBtn" onclick="archiveTaskFromBlock()" style="display:none">Arşivle</button>
       <button class="btn btn-ghost" onclick="closeOverlay('blockOverlay')">İptal</button>
       <button class="btn btn-primary" onclick="saveBlock()">Kaydet</button>
     </div>
@@ -772,6 +773,11 @@ function openBlockModal(iso,_u,hour,editId,preTaskId=null,preSubId=null,endHour=
   const block=editId?blocks.find(b=>b.id===editId):null;
   document.getElementById('blockModalTitle').textContent=editId?'Bloğu Düzenle':'Blok Ekle';
   document.getElementById('blockDeleteBtn').style.display=editId?'block':'none';
+  const blockForArchive=editId?blocks.find(b=>b.id===editId):null;
+  const taskForArchive=blockForArchive?tasks.find(t=>t.id===blockForArchive.task_id):null;
+  const archBtn=document.getElementById('blockArchiveBtn');
+  archBtn.style.display=editId?'block':'none';
+  archBtn.textContent=taskForArchive?.archived?'Arşivden Çıkar':'Arşivle';
   const sel=document.getElementById('blockTask');
   sel.innerHTML=tasks.filter(t=>!t.archived).map(t=>`<option value="${t.id}">${t.title}</option>`).join('');
   if(block){
@@ -829,6 +835,19 @@ async function deleteBlock(){
   await sb.from('blocks').delete().eq('id',editingBlockId);
   blocks=blocks.filter(b=>b.id!==editingBlockId);
   closeOverlay('blockOverlay');
+  if(currentView==='week'){renderBlocks();renderNowLine();}else renderMonth();
+}
+
+async function archiveTaskFromBlock(){
+  if(!editingBlockId)return;
+  const block=blocks.find(b=>b.id===editingBlockId);if(!block)return;
+  const t=tasks.find(x=>x.id===block.task_id);if(!t)return;
+  const prev=t.archived;
+  t.archived=!t.archived;
+  const {error}=await sb.from('tasks').update({archived:t.archived}).eq('id',t.id);
+  if(error){t.archived=prev;alert('Hata: '+error.message);return;}
+  closeOverlay('blockOverlay');
+  setLegendTab(t.archived?'archive':'active');
   if(currentView==='week'){renderBlocks();renderNowLine();}else renderMonth();
 }
 
