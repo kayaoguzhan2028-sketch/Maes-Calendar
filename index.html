@@ -629,7 +629,7 @@ function onBlockDragEnd(e){
   document.getElementById('dragGhost').style.display='none';
   document.querySelectorAll('.drag-over').forEach(el=>el.classList.remove('drag-over'));
 }
-function onCellDragOver(e){e.preventDefault();e.dataTransfer.dropEffect=shiftPressed?'copy':'move';e.currentTarget.classList.add('drag-over');}
+function onCellDragOver(e){e.preventDefault();if(dragData?.type==='block')e.dataTransfer.dropEffect=shiftPressed?'copy':'move';e.currentTarget.classList.add('drag-over');}
 function onCellDragLeave(e){e.currentTarget.classList.remove('drag-over');}
 
 async function onCellDrop(e,iso,hour){
