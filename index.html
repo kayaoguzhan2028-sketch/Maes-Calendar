@@ -845,8 +845,9 @@ async function deleteBlock(){
 async function archiveTaskFromBlock(){
   if(!editingBlockId)return;
   const block=blocks.find(b=>b.id===editingBlockId);if(!block)return;
-  if(block.subtask_id){
-    const s=subtasks.find(x=>x.id===block.subtask_id);if(!s)return;
+  const subId=selectedBlockSubtaskId||block.subtask_id;
+  if(subId){
+    const s=subtasks.find(x=>x.id===subId);if(!s)return;
     const prev=s.archived;s.archived=!s.archived;
     const {error}=await sb.from('subtasks').update({archived:s.archived}).eq('id',s.id);
     if(error){s.archived=prev;alert('Hata: '+error.message);return;}
