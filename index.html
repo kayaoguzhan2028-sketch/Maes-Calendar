@@ -485,14 +485,14 @@ function renderBlocks(){
     const height=Math.max(((ec-sc)/60)*HOUR_H,18);
     const durMin=endMin-startMin;
     const dur=durMin>=60?`${Math.floor(durMin/60)}s${durMin%60>0?' '+durMin%60+'d':''}`:durMin+'d';
-    const displayColor=sub?sub.color:task.color;
-    const bg=darken(displayColor);
+    const bg=darken(task.color);
     const isFaded=task.archived||(sub&&sub.archived);
     const el=document.createElement('div');
     el.className='block'+(isFaded?' faded':'');el.dataset.blockId=block.id;
     el.style.cssText=`top:${top}px;height:${height}px;background:${bg};`;
     el.draggable=true;
-    el.innerHTML=`<div class="block-nodes"><div class="block-outer-node" style="color:${task.color}">${sub?`<div class="block-inner-node" style="color:${sub.color}"></div>`:''}</div></div><div class="block-title" style="color:${task.color};opacity:${sub?0.65:1}">${task.title}</div>${sub?`<div class="block-sub" style="color:${sub.color};font-size:10px;font-weight:500">${sub.title}</div>`:''}<div class="block-dur">${dur}</div>`;
+    const blockLabel=sub?`${task.title} / ${sub.title}`:task.title;
+    el.innerHTML=`<div class="block-nodes"><div class="block-outer-node" style="color:${task.color}"></div></div><div class="block-title" style="color:${task.color}">${blockLabel}</div><div class="block-dur">${dur}</div>`;
     el.addEventListener('click',e=>{e.stopPropagation();openBlockModal(null,null,null,block.id);});
     el.addEventListener('dragstart',e=>onBlockDragStart(e,block.id));
     el.addEventListener('dragend',onBlockDragEnd);
@@ -528,9 +528,8 @@ function renderMonth(){
     let bhtml=dayBlocks.slice(0,MAX).map(b=>{
       const t=tasks.find(x=>x.id===b.task_id);if(!t)return '';
       const sub=b.subtask_id?subtasks.find(s=>s.id===b.subtask_id):null;
-      const label=sub?`<span style="opacity:.7">${t.title}</span> · ${sub.title}`:t.title;
-      const dotColor=sub?sub.color:t.color;
-      return `<div class="mc-block" style="background:${darken(t.color,0.55)};color:${dotColor}" onclick="onMonthBlockClick(event,'${b.id}')">${label}</div>`;
+      const label=sub?`${t.title} / ${sub.title}`:t.title;
+      return `<div class="mc-block" style="background:${darken(t.color,0.55)};color:${t.color}" onclick="onMonthBlockClick(event,'${b.id}')">${label}</div>`;
     }).join('');
     if(dayBlocks.length>MAX) bhtml+=`<div class="mc-more">+${dayBlocks.length-MAX}</div>`;
     return `<div class="month-cell${other?' other-month':''}${isToday?' today':''}" onclick="onMonthCellClick('${iso}')"><div class="mc-num">${num}</div><div class="mc-blocks">${bhtml}</div></div>`;
