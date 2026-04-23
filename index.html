@@ -74,7 +74,7 @@ body { background: var(--bg); color: var(--text); font-family: 'Space Grotesk', 
 .legend-footer { padding: 8px; border-top: 1px solid var(--border); flex-shrink: 0; }
 
 /* CALENDAR WRAP */
-.calendar-wrap { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+.calendar-wrap { flex: 1; display: flex; flex-direction: column; overflow: hidden; min-height: 0; }
 
 /* WEEKLY */
 .cal-head { display: grid; grid-template-columns: var(--time-w) repeat(7, 1fr); border-bottom: 1px solid var(--border); flex-shrink: 0; background: var(--s1); }
@@ -84,7 +84,7 @@ body { background: var(--bg); color: var(--text); font-family: 'Space Grotesk', 
 .day-num { font-size: 16px; font-weight: 600; line-height: 1.2; margin-top: 1px; color: var(--text-mid); }
 .day-header.today .day-num { color: var(--accent); }
 .day-header.today .day-name { color: var(--accent); opacity: 0.7; }
-.cal-body { flex: 1; overflow-y: auto; position: relative; }
+.cal-body { flex: 1; overflow-y: auto; position: relative; min-height: 0; -webkit-overflow-scrolling: touch; }
 .cal-body::-webkit-scrollbar { width: 4px; }
 .cal-body::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
 .cal-grid { display: grid; grid-template-columns: var(--time-w) repeat(7, 1fr); }
@@ -176,6 +176,7 @@ body { background: var(--bg); color: var(--text); font-family: 'Space Grotesk', 
 
 /* MOBILE */
 @media (max-width: 960px) {
+  :root { --hour-h: 36px; }
   .topbar { z-index: 100; }
   .btn-hamburger { display: flex; }
   .btn-today { display: none; }
