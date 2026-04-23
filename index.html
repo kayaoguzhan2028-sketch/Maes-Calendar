@@ -386,7 +386,8 @@ const DAYS = ['Pzt','Sal','Çar','Per','Cum','Cmt','Paz'];
 const MONTHS = ['Ocak','Şubat','Mart','Nisan','Mayıs','Haziran','Temmuz','Ağustos','Eylül','Ekim','Kasım','Aralık'];
 const START_HOUR = 7;
 const END_HOUR = 24;
-const HOUR_H =39;
+let HOUR_H = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--hour-h'))||39;
+window.addEventListener('resize',()=>{HOUR_H=parseInt(getComputedStyle(document.documentElement).getPropertyValue('--hour-h'))||39;});
 
 let tasks=[], subtasks=[], blocks=[];
 let currentView='week';
