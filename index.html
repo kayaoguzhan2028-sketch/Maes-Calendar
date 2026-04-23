@@ -21,7 +21,7 @@
   --text-mid: #aaaaaa;
   --text-dim: #666666;
   --accent: #c0253a;
-  --hour-h: 33px;
+  --hour-h: 39px;
   --time-w: 46px;
 }
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -169,6 +169,21 @@ body { background: var(--bg); color: var(--text); font-family: 'Space Grotesk', 
 .subtask-opt-name { font-size: 11px; }
 ::-webkit-scrollbar { width: 3px; height: 3px; }
 ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+
+/* HAMBURGER */
+.btn-hamburger { display: none; background: none; border: 1px solid var(--border); color: var(--text-mid); width: 32px; height: 32px; border-radius: 7px; cursor: pointer; font-size: 16px; align-items: center; justify-content: center; flex-shrink: 0; }
+.legend-backdrop { display: none; position: fixed; inset: 0; z-index: 89; background: rgba(0,0,0,0.55); }
+
+/* MOBILE */
+@media (max-width: 700px) {
+  .btn-hamburger { display: flex; }
+  .btn-today { display: none; }
+  .period-label { min-width: 0; font-size: 10px; }
+  .legend { position: fixed; left: 0; top: 0; bottom: 0; z-index: 90; transform: translateX(-100%); transition: transform 0.22s ease; box-shadow: 4px 0 24px rgba(0,0,0,0.6); }
+  .legend.open { transform: translateX(0); }
+  .legend-backdrop.open { display: block; }
+}
+
 /* GİRİŞ EKRANI TASARIMI */
 #authOverlay {
   position: fixed;
@@ -243,8 +258,11 @@ body { background: var(--bg); color: var(--text); font-family: 'Space Grotesk', 
   <span class="select-bar-clear" onclick="clearSelection()">✕</span>
 </div>
 
+<div class="legend-backdrop" id="legendBackdrop" onclick="closeLegend()"></div>
+
 <!-- TOPBAR -->
 <div class="topbar">
+  <button class="btn-hamburger" id="btnHamburger" onclick="toggleLegend()">☰</button>
   <span class="logo">◈ planner</span>
   <div class="center-nav">
     <button class="nav-btn" onclick="changePeriod(-1)">‹</button>
@@ -360,7 +378,7 @@ const DAYS = ['Pzt','Sal','Çar','Per','Cum','Cmt','Paz'];
 const MONTHS = ['Ocak','Şubat','Mart','Nisan','Mayıs','Haziran','Temmuz','Ağustos','Eylül','Ekim','Kasım','Aralık'];
 const START_HOUR = 7;
 const END_HOUR = 24;
-const HOUR_H = 33;
+const HOUR_H =39;
 
 let tasks=[], subtasks=[], blocks=[];
 let currentView='week';
@@ -912,8 +930,12 @@ function selectColor(cid,color,el){
   document.querySelectorAll(`#${cid} .color-swatch`).forEach(s=>s.classList.remove('selected'));el.classList.add('selected');
 }
 
+// ── LEGEND MOBILE ──
+function toggleLegend(){const l=document.querySelector('.legend'),b=document.getElementById('legendBackdrop');l.classList.toggle('open');b.classList.toggle('open');}
+function closeLegend(){document.querySelector('.legend').classList.remove('open');document.getElementById('legendBackdrop').classList.remove('open');}
+
 // ── OVERLAY ──
-function openOverlay(id){document.getElementById(id).classList.add('open');}
+function openOverlay(id){closeLegend();document.getElementById(id).classList.add('open');}
 function closeOverlay(id){document.getElementById(id).classList.remove('open');}
 function closeIfOutside(e,id){if(e.target.id===id)closeOverlay(id);}
 
