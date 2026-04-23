@@ -177,6 +177,9 @@ body { background: var(--bg); color: var(--text); font-family: 'Space Grotesk', 
 /* MOBILE */
 @media (max-width: 960px) {
   :root { --hour-h: 36px; }
+  body { height: 100svh; }
+  .body { min-height: 0; }
+  .cal-body { overflow-y: scroll; }
   .topbar { z-index: 100; }
   .btn-hamburger { display: flex; }
   .btn-today { display: none; }
