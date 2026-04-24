@@ -112,6 +112,9 @@ body { background: var(--bg); color: var(--text); font-family: 'Space Grotesk', 
 .block-title { font-size: 8px; font-weight: 500; line-height: 1.1; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
 .block-sub { font-size: 7px; opacity: 0.75; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .block-dur { font-family: 'JetBrains Mono', monospace; font-size: 5px; opacity: 0.55; margin-top: 1px; }
+.block-done-btn { position: absolute; top: 2px; right: 3px; background: none; border: none; color: inherit; cursor: pointer; font-size: 9px; opacity: 0.4; padding: 0; line-height: 1; z-index: 6; }
+.block-done-btn:hover { opacity: 1; }
+.block-done-btn.done { opacity: 0.9; }
 .now-line { position: absolute; left: 0; right: 0; height: 1px; background: var(--accent); z-index: 8; pointer-events: none; }
 .now-line::before { content: ''; position: absolute; left: -3px; top: -3px; width: 7px; height: 7px; border-radius: 50%; background: var(--accent); }
 
@@ -558,13 +561,13 @@ function renderBlocks(){
     const durMin=endMin-startMin;
     const dur=durMin>=60?`${Math.floor(durMin/60)}s${durMin%60>0?' '+durMin%60+'d':''}`:durMin+'d';
     const bg=darken(task.color);
-    const isFaded=task.archived||(sub&&sub.archived);
+    const isFaded=task.archived||(sub&&sub.archived)||block.completed;
     const el=document.createElement('div');
     el.className='block'+(isFaded?' faded':'');el.dataset.blockId=block.id;
     el.style.cssText=`top:${top}px;height:${height}px;background:${bg};`;
     el.draggable=true;
     const blockLabel=sub?`${task.title} / ${sub.title}`:task.title;
-    el.innerHTML=`<div class="block-nodes"><div class="block-outer-node" style="color:${task.color}"></div><div class="block-title" style="color:${task.color}">${blockLabel}</div></div><div class="block-dur">${dur}</div>`;
+    el.innerHTML=`<div class="block-nodes"><div class="block-outer-node" style="color:${task.color}"></div><div class="block-title" style="color:${task.color}">${blockLabel}</div></div><div class="block-dur">${dur}</div><button class="block-done-btn${block.completed?' done':''}" onclick="event.stopPropagation();toggleBlockCompleted('${block.id}')">✓</button>`;
     el.addEventListener('click',e=>{e.stopPropagation();openBlockModal(null,null,null,block.id);});
     el.addEventListener('dragstart',e=>onBlockDragStart(e,block.id));
     el.addEventListener('dragend',onBlockDragEnd);
@@ -909,6 +912,13 @@ async function deleteBlock(){
   blocks=blocks.filter(b=>b.id!==editingBlockId);
   closeOverlay('blockOverlay');
   if(currentView==='week'){renderBlocks();renderNowLine();}else renderMonth();
+}
+
+async function toggleBlockCompleted(blockId){
+  const block=blocks.find(b=>b.id===blockId);if(!block)return;
+  block.completed=!block.completed;
+  await sb.from('blocks').update({completed:block.completed}).eq('id',blockId);
+  renderBlocks();renderNowLine();
 }
 
 async function archiveTaskFromBlock(){
