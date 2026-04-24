@@ -873,7 +873,7 @@ function openBlockModal(iso,_u,hour,editId,preTaskId=null,preSubId=null,endHour=
 
 function renderSubtaskSelect(){
   const taskId=document.getElementById('blockTask').value;
-  const subs=subtasks.filter(s=>s.task_id===taskId);
+  const subs=subtasks.filter(s=>s.task_id===taskId&&!s.archived);
   const el=document.getElementById('blockSubtaskList');
   if(!subs.length){el.innerHTML=`<div style="font-size:10px;color:var(--text-dim);padding:3px">Alt görev yok.</div>`;return;}
   el.innerHTML=subs.map(s=>`<div class="subtask-opt${selectedBlockSubtaskId===s.id?' selected':''}" onclick="selectBlockSub('${s.id}',this)"><div class="subtask-opt-dot" style="background:${s.color}"></div><span class="subtask-opt-name">${s.title}</span></div>`).join('');
