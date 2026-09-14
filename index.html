@@ -23,6 +23,7 @@
   --accent: #c0253a;
   --pos: #49ff00;
   --neg: #ff5252;
+  --debt: #ffb300;
   --hour-h: 39px;
   --time-w: 46px;
 }
@@ -185,6 +186,10 @@ body { background: var(--bg); color: var(--text); font-family: 'Space Grotesk', 
 .modal-title-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
 .btn-ghost-icon { background: none; border: none; color: var(--text-dim); font-size: 16px; cursor: pointer; line-height: 1; padding: 2px 4px; }
 .btn-ghost-icon:hover { color: var(--text); }
+.ledger-balance { text-align: center; font-size: 38px; font-weight: 700; margin-bottom: 4px; font-family: 'JetBrains Mono', monospace; letter-spacing: -0.01em; }
+.ledger-balance.positive { color: var(--pos); }
+.ledger-balance.negative { color: var(--neg); }
+.ledger-balance-label { text-align: center; font-family: 'JetBrains Mono', monospace; font-size: 9px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.08em; padding-bottom: 14px; border-bottom: 1px solid var(--border); margin-bottom: 16px; }
 .ledger-month-nav { display: flex; align-items: center; justify-content: center; gap: 14px; margin-bottom: 14px; }
 .ledger-month-label { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--text-mid); min-width: 120px; text-align: center; text-transform: capitalize; }
 .ledger-total { text-align: center; font-size: 32px; font-weight: 600; margin-bottom: 4px; font-family: 'JetBrains Mono', monospace; }
@@ -204,6 +209,7 @@ body { background: var(--bg); color: var(--text); font-family: 'Space Grotesk', 
 .ledger-entry-date { font-family: 'JetBrains Mono', monospace; font-size: 9px; color: var(--text-dim); width: 38px; flex-shrink: 0; }
 .ledger-entry-note { flex: 1; font-size: 11px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .ledger-entry-tag { color: var(--text-dim); font-size: 9px; }
+.ledger-entry-tag.debt { color: var(--debt); }
 .ledger-entry-amount { font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 600; flex-shrink: 0; }
 .ledger-entry-amount.positive { color: var(--pos); }
 .ledger-entry-amount.negative { color: var(--neg); }
@@ -214,6 +220,7 @@ body { background: var(--bg); color: var(--text); font-family: 'Space Grotesk', 
 .ledger-note-input { flex: 1; }
 .ledger-type-btn { width: 30px; height: 30px; border-radius: 6px; border: 1px solid var(--border); background: var(--s3); color: var(--neg); font-size: 15px; font-weight: 700; cursor: pointer; flex-shrink: 0; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
 .ledger-type-btn.gelir { color: var(--pos); border-color: var(--pos); }
+.ledger-type-btn.borc { color: var(--debt); border-color: var(--debt); font-size: 12px; }
 .ledger-row-del { background: none; border: none; color: var(--text-dim); cursor: pointer; font-size: 13px; flex-shrink: 0; padding: 4px 2px; }
 .ledger-row-del:hover { color: var(--neg); }
 .ledger-add-row-btn { font-size: 11px; color: var(--text-dim); cursor: pointer; padding: 7px 0; text-align: center; border: 1px dashed var(--border); border-radius: 6px; transition: color 0.15s, border-color 0.15s; }
@@ -415,15 +422,17 @@ body { background: var(--bg); color: var(--text); font-family: 'Space Grotesk', 
       <div class="modal-title" style="margin-bottom:0">Bilanço</div>
       <button class="btn-ghost-icon" onclick="closeOverlay('ledgerOverlay')">✕</button>
     </div>
+    <div class="ledger-balance" id="ledgerBalance">0 ₺</div>
+    <div class="ledger-balance-label">güncel bakiye</div>
     <div class="ledger-month-nav">
       <button class="nav-btn" onclick="changeLedgerMonth(-1)">‹</button>
       <span class="ledger-month-label" id="ledgerMonthLabel"></span>
       <button class="nav-btn" onclick="changeLedgerMonth(1)">›</button>
     </div>
     <div class="ledger-total" id="ledgerTotal">0 ₺</div>
-    <div class="ledger-total-label">bu ayın toplamı</div>
+    <div class="ledger-total-label">bu ayın net değişimi</div>
     <div class="ledger-quick-add">
-      <button class="ledger-type-btn" id="quickAddType" onclick="toggleQuickAddType()">−</button>
+      <button class="ledger-type-btn" id="quickAddType" onclick="toggleQuickAddType()" title="Gider">−</button>
       <input class="finput" id="quickAddAmount" type="number" inputmode="decimal" placeholder="tutar">
       <input class="finput" id="quickAddNote" type="text" placeholder="not (opsiyonel)">
       <button class="btn btn-primary" onclick="quickAddLedgerEntry()">Ekle</button>
@@ -927,7 +936,7 @@ async function toggleArchiveSubtask(){
 // ── BLOCK MODAL ──
 function openBlockModal(iso,_u,hour,editId,preTaskId=null,preSubId=null,endHour=null){
   editingBlockId=editId;selectedBlockSubtaskId=null;
-  blockLedgerRows=editId?ledgerEntries.filter(e=>e.block_id===editId).map(e=>({type:Number(e.amount)>=0?'gelir':'gider',amount:String(Math.abs(Number(e.amount))),note:e.note||''})):[];
+  blockLedgerRows=editId?ledgerEntries.filter(e=>e.block_id===editId).map(e=>({type:ledgerTypeOf(e),amount:String(Math.abs(Number(e.amount))),note:e.note||''})):[];
   const block=editId?blocks.find(b=>b.id===editId):null;
   document.getElementById('blockModalTitle').textContent=editId?'Bloğu Düzenle':'Blok Ekle';
   document.getElementById('blockDeleteBtn').style.display=editId?'block':'none';
@@ -965,7 +974,7 @@ function renderBlockLedgerRows(){
   const el=document.getElementById('blockLedgerRows');
   if(!blockLedgerRows.length){el.innerHTML='';return;}
   el.innerHTML=blockLedgerRows.map((r,i)=>`<div class="ledger-row">
-    <button class="ledger-type-btn ${r.type}" onclick="toggleBlockLedgerRowType(${i})">${r.type==='gelir'?'+':'−'}</button>
+    <button class="ledger-type-btn ${ledgerTypeClass(r.type)}" title="${LEDGER_TYPE_TITLES[r.type]}" onclick="toggleBlockLedgerRowType(${i})">${LEDGER_TYPE_SIGNS[r.type]}</button>
     <input class="finput ledger-amount-input" type="number" inputmode="decimal" placeholder="0" value="${r.amount}" oninput="updateBlockLedgerRow(${i},'amount',this.value)">
     <input class="finput ledger-note-input" type="text" placeholder="not (opsiyonel)" value="${r.note}" oninput="updateBlockLedgerRow(${i},'note',this.value)">
     <button class="ledger-row-del" onclick="removeBlockLedgerRow(${i})">✕</button>
@@ -973,7 +982,7 @@ function renderBlockLedgerRows(){
 }
 function addBlockLedgerRow(){blockLedgerRows.push({type:'gider',amount:'',note:''});renderBlockLedgerRows();}
 function removeBlockLedgerRow(i){blockLedgerRows.splice(i,1);renderBlockLedgerRows();}
-function toggleBlockLedgerRowType(i){blockLedgerRows[i].type=blockLedgerRows[i].type==='gelir'?'gider':'gelir';renderBlockLedgerRows();}
+function toggleBlockLedgerRowType(i){blockLedgerRows[i].type=nextLedgerType(blockLedgerRows[i].type);renderBlockLedgerRows();}
 function updateBlockLedgerRow(i,field,val){blockLedgerRows[i][field]=val;}
 
 function renderSubtaskSelect(){
@@ -1011,7 +1020,7 @@ async function saveBlock(){
     ledgerEntries=ledgerEntries.filter(e=>e.block_id!==savedBlockId);
     const validRows=blockLedgerRows.filter(r=>parseFloat(r.amount)>0);
     if(validRows.length){
-      const inserts=validRows.map(r=>({block_id:savedBlockId,entry_date:dateStr,amount:r.type==='gelir'?Math.abs(parseFloat(r.amount)):-Math.abs(parseFloat(r.amount)),note:(r.note||'').trim()||null}));
+      const inserts=validRows.map(r=>({block_id:savedBlockId,entry_date:dateStr,amount:ledgerTypeAmount(r.type,parseFloat(r.amount)),is_debt:ledgerTypeIsDebt(r.type),note:(r.note||'').trim()||null}));
       const {data:newEntries}=await sb.from('ledger_entries').insert(inserts).select();
       if(newEntries) ledgerEntries.push(...newEntries);
     }
@@ -1062,6 +1071,14 @@ function formatTL(n){
   const abs=Math.abs(v).toLocaleString('tr-TR',{minimumFractionDigits:0,maximumFractionDigits:2});
   return `${v<0?'−':''}${abs} ₺`;
 }
+const LEDGER_TYPES=['gider','gelir','borc_alindi','borc_verildi'];
+const LEDGER_TYPE_SIGNS={gider:'−',gelir:'+',borc_alindi:'+B',borc_verildi:'−B'};
+const LEDGER_TYPE_TITLES={gider:'Gider',gelir:'Gelir',borc_alindi:'Borç Aldım',borc_verildi:'Borç Verdim'};
+function nextLedgerType(t){return LEDGER_TYPES[(LEDGER_TYPES.indexOf(t)+1)%LEDGER_TYPES.length];}
+function ledgerTypeClass(t){return t==='gelir'?'gelir':(t==='gider'?'':'borc');}
+function ledgerTypeIsDebt(t){return t==='borc_alindi'||t==='borc_verildi';}
+function ledgerTypeAmount(t,val){return (t==='gelir'||t==='borc_alindi')?Math.abs(val):-Math.abs(val);}
+function ledgerTypeOf(e){return e.is_debt?(Number(e.amount)>=0?'borc_alindi':'borc_verildi'):(Number(e.amount)>=0?'gelir':'gider');}
 function weekOfMonth(dateObj){
   return Math.ceil(dateObj.getDate()/7);
 }
@@ -1070,8 +1087,7 @@ function openLedgerModal(){
   document.getElementById('quickAddAmount').value='';
   document.getElementById('quickAddNote').value='';
   quickAddType='gider';
-  document.getElementById('quickAddType').textContent='−';
-  document.getElementById('quickAddType').classList.remove('gelir');
+  renderQuickAddType();
   renderLedger();
   openOverlay('ledgerOverlay');
 }
@@ -1084,19 +1100,23 @@ function quickAddDate(){
   if(ledgerMonth.getFullYear()===now.getFullYear()&&ledgerMonth.getMonth()===now.getMonth()) return toISO(now);
   return toISO(new Date(ledgerMonth.getFullYear(),ledgerMonth.getMonth(),1));
 }
-function toggleQuickAddType(){
-  quickAddType=quickAddType==='gelir'?'gider':'gelir';
+function renderQuickAddType(){
   const btn=document.getElementById('quickAddType');
-  btn.textContent=quickAddType==='gelir'?'+':'−';
-  btn.classList.toggle('gelir',quickAddType==='gelir');
+  btn.textContent=LEDGER_TYPE_SIGNS[quickAddType];
+  btn.title=LEDGER_TYPE_TITLES[quickAddType];
+  btn.className='ledger-type-btn '+ledgerTypeClass(quickAddType);
+}
+function toggleQuickAddType(){
+  quickAddType=nextLedgerType(quickAddType);
+  renderQuickAddType();
 }
 async function quickAddLedgerEntry(){
   const raw=document.getElementById('quickAddAmount').value;
   const val=parseFloat(raw);
   if(!val||val<=0) return;
-  const amount=quickAddType==='gelir'?Math.abs(val):-Math.abs(val);
+  const amount=ledgerTypeAmount(quickAddType,val);
   const note=document.getElementById('quickAddNote').value.trim()||null;
-  const payload={block_id:null,entry_date:quickAddDate(),amount,note};
+  const payload={block_id:null,entry_date:quickAddDate(),amount,is_debt:ledgerTypeIsDebt(quickAddType),note};
   const {data,error}=await sb.from('ledger_entries').insert(payload).select().single();
   if(error){alert('Hata: '+error.message);return;}
   ledgerEntries.push(data);
@@ -1119,13 +1139,17 @@ function ledgerRowHtml(e){
   const amt=Number(e.amount);
   return `<div class="ledger-entry-row">
     <span class="ledger-entry-date">${dateShort}</span>
-    <span class="ledger-entry-note">${label}${task&&e.note?` <span class="ledger-entry-tag">· ${task.title}</span>`:''}</span>
+    <span class="ledger-entry-note">${label}${e.is_debt?` <span class="ledger-entry-tag debt">· ${amt>=0?'Borç aldım':'Borç verdim'}</span>`:''}${task&&e.note?` <span class="ledger-entry-tag">· ${task.title}</span>`:''}</span>
     <span class="ledger-entry-amount ${amt>=0?'positive':'negative'}">${formatTL(amt)}</span>
     <button class="ledger-row-del" onclick="deleteLedgerEntry('${e.id}')">✕</button>
   </div>`;
 }
 function renderLedger(){
   document.getElementById('ledgerMonthLabel').textContent=`${MONTHS[ledgerMonth.getMonth()]} ${ledgerMonth.getFullYear()}`;
+  const balance=ledgerEntries.reduce((s,e)=>s+Number(e.amount),0);
+  const balanceEl=document.getElementById('ledgerBalance');
+  balanceEl.textContent=formatTL(balance);
+  balanceEl.className='ledger-balance '+(balance>=0?'positive':'negative');
   const y=ledgerMonth.getFullYear(),m=ledgerMonth.getMonth();
   const monthEntries=ledgerEntries.filter(e=>{
     if(!e.entry_date) return false;
