@@ -21,6 +21,8 @@
   --text-mid: #aaaaaa;
   --text-dim: #666666;
   --accent: #c0253a;
+  --pos: #49ff00;
+  --neg: #ff5252;
   --hour-h: 39px;
   --time-w: 46px;
 }
@@ -41,6 +43,8 @@ body { background: var(--bg); color: var(--text); font-family: 'Space Grotesk', 
 .btn-today:hover { border-color: var(--accent); color: var(--accent); }
 .btn-new-task { background: var(--accent); color: #080808; border: none; font-family: 'Space Grotesk', sans-serif; font-size: 12px; font-weight: 600; padding: 6px 14px; border-radius: 7px; cursor: pointer; transition: opacity 0.15s; display: flex; align-items: center; gap: 5px; flex-shrink: 0; }
 .btn-new-task:hover { opacity: 0.85; }
+.btn-ledger { background: var(--s2); border: 1px solid var(--border); color: var(--pos); font-family: 'JetBrains Mono', monospace; font-size: 11px; padding: 6px 12px; border-radius: 7px; cursor: pointer; transition: all 0.15s; flex-shrink: 0; display: flex; align-items: center; gap: 4px; }
+.btn-ledger:hover { border-color: var(--pos); }
 
 /* BODY */
 .body { display: flex; flex: 1; overflow: hidden; }
@@ -112,6 +116,9 @@ body { background: var(--bg); color: var(--text); font-family: 'Space Grotesk', 
 .block-title { font-size: 8px; font-weight: 500; line-height: 1.1; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
 .block-sub { font-size: 7px; opacity: 0.75; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .block-dur { font-family: 'JetBrains Mono', monospace; font-size: 5px; opacity: 0.55; margin-top: 1px; }
+.block-money { font-family: 'JetBrains Mono', monospace; font-size: 5px; opacity: 0.85; margin-top: 1px; font-weight: 600; }
+.block-money.pos { color: #8aff5c; }
+.block-money.neg { color: #ff8a8a; }
 .block-done-btn { position: absolute; top: 2px; right: 3px; background: none; border: none; color: inherit; cursor: pointer; font-size: 9px; opacity: 0.4; padding: 0; line-height: 1; z-index: 6; }
 .block-done-btn:hover { opacity: 1; }
 .block-done-btn.done { opacity: 0.9; }
@@ -172,6 +179,49 @@ body { background: var(--bg); color: var(--text); font-family: 'Space Grotesk', 
 .subtask-opt-name { font-size: 11px; }
 ::-webkit-scrollbar { width: 3px; height: 3px; }
 ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+
+/* BİLANÇO (LEDGER) */
+.modal-wide { max-width: 480px; }
+.modal-title-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+.btn-ghost-icon { background: none; border: none; color: var(--text-dim); font-size: 16px; cursor: pointer; line-height: 1; padding: 2px 4px; }
+.btn-ghost-icon:hover { color: var(--text); }
+.ledger-month-nav { display: flex; align-items: center; justify-content: center; gap: 14px; margin-bottom: 14px; }
+.ledger-month-label { font-family: 'JetBrains Mono', monospace; font-size: 12px; color: var(--text-mid); min-width: 120px; text-align: center; text-transform: capitalize; }
+.ledger-total { text-align: center; font-size: 32px; font-weight: 600; margin-bottom: 4px; font-family: 'JetBrains Mono', monospace; }
+.ledger-total.positive { color: var(--pos); }
+.ledger-total.negative { color: var(--neg); }
+.ledger-total-label { text-align: center; font-family: 'JetBrains Mono', monospace; font-size: 9px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 16px; }
+.ledger-quick-add { display: flex; gap: 6px; margin-bottom: 16px; align-items: center; }
+.ledger-quick-add .finput { }
+#quickAddAmount { max-width: 90px; flex: 0 0 90px; }
+#quickAddNote { flex: 1; }
+.ledger-weeks { max-height: 320px; overflow-y: auto; }
+.ledger-week-group { margin-bottom: 14px; }
+.ledger-week-head { display: flex; justify-content: space-between; font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.06em; padding: 4px 2px; border-bottom: 1px solid var(--border); margin-bottom: 4px; }
+.ledger-week-head .positive { color: var(--pos); }
+.ledger-week-head .negative { color: var(--neg); }
+.ledger-entry-row { display: flex; align-items: center; gap: 8px; padding: 6px 2px; border-bottom: 1px solid rgba(255,255,255,0.03); }
+.ledger-entry-date { font-family: 'JetBrains Mono', monospace; font-size: 9px; color: var(--text-dim); width: 38px; flex-shrink: 0; }
+.ledger-entry-note { flex: 1; font-size: 11px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ledger-entry-tag { color: var(--text-dim); font-size: 9px; }
+.ledger-entry-amount { font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 600; flex-shrink: 0; }
+.ledger-entry-amount.positive { color: var(--pos); }
+.ledger-entry-amount.negative { color: var(--neg); }
+.ledger-empty { text-align: center; font-size: 11px; color: var(--text-dim); padding: 24px 0; }
+.ledger-rows { display: flex; flex-direction: column; gap: 6px; margin-bottom: 6px; }
+.ledger-row { display: flex; gap: 6px; align-items: center; }
+.ledger-amount-input { width: 78px; flex-shrink: 0; }
+.ledger-note-input { flex: 1; }
+.ledger-type-btn { width: 30px; height: 30px; border-radius: 6px; border: 1px solid var(--border); background: var(--s3); color: var(--neg); font-size: 15px; font-weight: 700; cursor: pointer; flex-shrink: 0; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
+.ledger-type-btn.gelir { color: var(--pos); border-color: var(--pos); }
+.ledger-row-del { background: none; border: none; color: var(--text-dim); cursor: pointer; font-size: 13px; flex-shrink: 0; padding: 4px 2px; }
+.ledger-row-del:hover { color: var(--neg); }
+.ledger-add-row-btn { font-size: 11px; color: var(--text-dim); cursor: pointer; padding: 7px 0; text-align: center; border: 1px dashed var(--border); border-radius: 6px; transition: color 0.15s, border-color 0.15s; }
+.ledger-add-row-btn:hover { color: var(--accent); border-color: var(--accent); }
+@media (max-width: 960px) {
+  .btn-ledger-text { display: none; }
+  .btn-ledger { padding: 6px 9px; }
+}
 
 /* HAMBURGER */
 .btn-hamburger { display: none; background: none; border: 1px solid var(--border); color: var(--text-mid); width: 32px; height: 32px; border-radius: 7px; cursor: pointer; font-size: 16px; align-items: center; justify-content: center; flex-shrink: 0; }
@@ -256,7 +306,7 @@ body { background: var(--bg); color: var(--text); font-family: 'Space Grotesk', 
 <div id="authOverlay">
   <div class="auth-card">
     <img src="logo.png" alt="Logo" style="width: 80px; height: 80px; margin-bottom: 20px; border-radius: 50%;">
-    
+
     <div class="auth-title">SİSTEME GİRİŞ</div>
     <input type="password" id="passInput" class="auth-input" placeholder="Şifre Giriniz">
     <button class="auth-btn" onclick="checkMasterPassword()">GİRİŞ YAP</button>
@@ -285,6 +335,7 @@ body { background: var(--bg); color: var(--text); font-family: 'Space Grotesk', 
       <button class="view-btn" id="btnMonth" onclick="setView('month')">ay</button>
     </div>
   </div>
+  <button class="btn-ledger" onclick="openLedgerModal()"><span>₺</span><span class="btn-ledger-text">Bilanço</span></button>
   <button class="btn-new-task" onclick="openTaskModal()">+ Görev</button>
 </div>
 
@@ -343,12 +394,41 @@ body { background: var(--bg); color: var(--text); font-family: 'Space Grotesk', 
       <div><label class="flabel">Bitiş</label><input class="finput" type="time" id="blockEnd"></div>
     </div>
     <div class="fg"><label class="flabel">Not</label><textarea class="ftextarea" id="blockNotes" placeholder="Açıklama..."></textarea></div>
+    <div class="fg">
+      <label class="flabel">Bilanço Kalemleri</label>
+      <div class="ledger-rows" id="blockLedgerRows"></div>
+      <div class="ledger-add-row-btn" onclick="addBlockLedgerRow()">+ Kalem Ekle</div>
+    </div>
     <div class="modal-actions">
       <button class="btn btn-danger" id="blockDeleteBtn" onclick="deleteBlock()" style="display:none">Sil</button>
       <button class="btn btn-archive" id="blockArchiveBtn" onclick="archiveTaskFromBlock()" style="display:none">Arşivle</button>
       <button class="btn btn-ghost" onclick="closeOverlay('blockOverlay')">İptal</button>
       <button class="btn btn-primary" onclick="saveBlock()">Kaydet</button>
     </div>
+  </div>
+</div>
+
+<!-- LEDGER (BİLANÇO) MODAL -->
+<div class="overlay" id="ledgerOverlay" onclick="closeIfOutside(event,'ledgerOverlay')">
+  <div class="modal modal-wide">
+    <div class="modal-title-row">
+      <div class="modal-title" style="margin-bottom:0">Bilanço</div>
+      <button class="btn-ghost-icon" onclick="closeOverlay('ledgerOverlay')">✕</button>
+    </div>
+    <div class="ledger-month-nav">
+      <button class="nav-btn" onclick="changeLedgerMonth(-1)">‹</button>
+      <span class="ledger-month-label" id="ledgerMonthLabel"></span>
+      <button class="nav-btn" onclick="changeLedgerMonth(1)">›</button>
+    </div>
+    <div class="ledger-total" id="ledgerTotal">0 ₺</div>
+    <div class="ledger-total-label">bu ayın toplamı</div>
+    <div class="ledger-quick-add">
+      <button class="ledger-type-btn" id="quickAddType" onclick="toggleQuickAddType()">−</button>
+      <input class="finput" id="quickAddAmount" type="number" inputmode="decimal" placeholder="tutar">
+      <input class="finput" id="quickAddNote" type="text" placeholder="not (opsiyonel)">
+      <button class="btn btn-primary" onclick="quickAddLedgerEntry()">Ekle</button>
+    </div>
+    <div class="ledger-weeks" id="ledgerWeeks"></div>
   </div>
 </div>
 
@@ -392,7 +472,7 @@ const END_HOUR = 24;
 let HOUR_H = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--hour-h'))||39;
 window.addEventListener('resize',()=>{HOUR_H=parseInt(getComputedStyle(document.documentElement).getPropertyValue('--hour-h'))||39;});
 
-let tasks=[], subtasks=[], blocks=[];
+let tasks=[], subtasks=[], blocks=[], ledgerEntries=[];
 let currentView='week';
 let weekStart=getWeekStart(new Date());
 let currentMonth=new Date();
@@ -403,6 +483,9 @@ let selectedBlockSubtaskId=null;
 let dragData=null;
 let shiftPressed=false;
 let selectedCells=[];
+let blockLedgerRows=[];
+let ledgerMonth=new Date();
+let quickAddType='gider';
 
 // ── UTILS ──
 function getWeekStart(d){const day=d.getDay(),diff=day===0?-6:1-day,s=new Date(d);s.setDate(d.getDate()+diff);s.setHours(0,0,0,0);return s;}
@@ -417,8 +500,8 @@ function parseTime(str){if(!str)return new Date();return new Date(str.replace(/(
 
 // ── DATA ──
 async function loadAll(){
-  const [t,s,b]=await Promise.all([sb.from('tasks').select('*').order('created_at'),sb.from('subtasks').select('*').order('created_at'),sb.from('blocks').select('*')]);
-  tasks=t.data||[];subtasks=s.data||[];blocks=b.data||[];
+  const [t,s,b,l]=await Promise.all([sb.from('tasks').select('*').order('created_at'),sb.from('subtasks').select('*').order('created_at'),sb.from('blocks').select('*'),sb.from('ledger_entries').select('*')]);
+  tasks=t.data||[];subtasks=s.data||[];blocks=b.data||[];ledgerEntries=l.data||[];
   render();
 }
 
@@ -567,7 +650,9 @@ function renderBlocks(){
     el.style.cssText=`top:${top}px;height:${height}px;background:${bg};`;
     el.draggable=true;
     const blockLabel=sub?`${task.title} / ${sub.title}`:task.title;
-    el.innerHTML=`<div class="block-nodes"><div class="block-outer-node" style="color:${task.color}"></div><div class="block-title" style="color:${task.color}">${blockLabel}</div></div><div class="block-dur">${dur}</div><button class="block-done-btn${block.completed?' done':''}" onclick="event.stopPropagation();toggleBlockCompleted('${block.id}')">✓</button>`;
+    const blockMoney=ledgerEntries.filter(e=>e.block_id===block.id).reduce((s,e)=>s+Number(e.amount),0);
+    const moneyHtml=blockMoney?`<div class="block-money ${blockMoney>=0?'pos':'neg'}">${formatTL(blockMoney)}</div>`:'';
+    el.innerHTML=`<div class="block-nodes"><div class="block-outer-node" style="color:${task.color}"></div><div class="block-title" style="color:${task.color}">${blockLabel}</div></div><div class="block-dur">${dur}</div>${moneyHtml}<button class="block-done-btn${block.completed?' done':''}" onclick="event.stopPropagation();toggleBlockCompleted('${block.id}')">✓</button>`;
     el.addEventListener('click',e=>{e.stopPropagation();openBlockModal(null,null,null,block.id);});
     el.addEventListener('dragstart',e=>onBlockDragStart(e,block.id));
     el.addEventListener('dragend',onBlockDragEnd);
@@ -842,6 +927,7 @@ async function toggleArchiveSubtask(){
 // ── BLOCK MODAL ──
 function openBlockModal(iso,_u,hour,editId,preTaskId=null,preSubId=null,endHour=null){
   editingBlockId=editId;selectedBlockSubtaskId=null;
+  blockLedgerRows=editId?ledgerEntries.filter(e=>e.block_id===editId).map(e=>({type:Number(e.amount)>=0?'gelir':'gider',amount:String(Math.abs(Number(e.amount))),note:e.note||''})):[];
   const block=editId?blocks.find(b=>b.id===editId):null;
   document.getElementById('blockModalTitle').textContent=editId?'Bloğu Düzenle':'Blok Ekle';
   document.getElementById('blockDeleteBtn').style.display=editId?'block':'none';
@@ -871,8 +957,24 @@ function openBlockModal(iso,_u,hour,editId,preTaskId=null,preSubId=null,endHour=
     document.getElementById('blockNotes').value='';
     pendingBlockDate=iso;if(preSubId)selectedBlockSubtaskId=preSubId;
   }
-  renderSubtaskSelect();openOverlay('blockOverlay');
+  renderSubtaskSelect();renderBlockLedgerRows();openOverlay('blockOverlay');
 }
+
+// ── BLOCK LEDGER ROWS (bir etkinliğe bağlı bilanço kalemleri) ──
+function renderBlockLedgerRows(){
+  const el=document.getElementById('blockLedgerRows');
+  if(!blockLedgerRows.length){el.innerHTML='';return;}
+  el.innerHTML=blockLedgerRows.map((r,i)=>`<div class="ledger-row">
+    <button class="ledger-type-btn ${r.type}" onclick="toggleBlockLedgerRowType(${i})">${r.type==='gelir'?'+':'−'}</button>
+    <input class="finput ledger-amount-input" type="number" inputmode="decimal" placeholder="0" value="${r.amount}" oninput="updateBlockLedgerRow(${i},'amount',this.value)">
+    <input class="finput ledger-note-input" type="text" placeholder="not (opsiyonel)" value="${r.note}" oninput="updateBlockLedgerRow(${i},'note',this.value)">
+    <button class="ledger-row-del" onclick="removeBlockLedgerRow(${i})">✕</button>
+  </div>`).join('');
+}
+function addBlockLedgerRow(){blockLedgerRows.push({type:'gider',amount:'',note:''});renderBlockLedgerRows();}
+function removeBlockLedgerRow(i){blockLedgerRows.splice(i,1);renderBlockLedgerRows();}
+function toggleBlockLedgerRowType(i){blockLedgerRows[i].type=blockLedgerRows[i].type==='gelir'?'gider':'gelir';renderBlockLedgerRows();}
+function updateBlockLedgerRow(i,field,val){blockLedgerRows[i][field]=val;}
 
 function renderSubtaskSelect(){
   const taskId=document.getElementById('blockTask').value;
@@ -896,11 +998,23 @@ async function saveBlock(){
   const start=new Date(`${dateStr}T${sv}:00`),end=new Date(`${dateStr}T${ev}:00`);
   if(end<=start){alert('Bitiş başlangıçtan sonra olmalı');return;}
   const payload={task_id:taskId,subtask_id:selectedBlockSubtaskId||null,start_time:toLocalISO(start),end_time:toLocalISO(end),notes:document.getElementById('blockNotes').value.trim()||null};
+  let savedBlockId=editingBlockId;
   if(editingBlockId){
     await sb.from('blocks').update(payload).eq('id',editingBlockId);
     const idx=blocks.findIndex(b=>b.id===editingBlockId);if(idx>=0)blocks[idx]={...blocks[idx],...payload};
   } else {
-    const {data}=await sb.from('blocks').insert(payload).select().single();if(data)blocks.push(data);
+    const {data}=await sb.from('blocks').insert(payload).select().single();if(data){blocks.push(data);savedBlockId=data.id;}
+  }
+  // Bilanço kalemlerini bu etkinlik için yeniden yaz (sil + ekle)
+  if(savedBlockId){
+    await sb.from('ledger_entries').delete().eq('block_id',savedBlockId);
+    ledgerEntries=ledgerEntries.filter(e=>e.block_id!==savedBlockId);
+    const validRows=blockLedgerRows.filter(r=>parseFloat(r.amount)>0);
+    if(validRows.length){
+      const inserts=validRows.map(r=>({block_id:savedBlockId,entry_date:dateStr,amount:r.type==='gelir'?Math.abs(parseFloat(r.amount)):-Math.abs(parseFloat(r.amount)),note:(r.note||'').trim()||null}));
+      const {data:newEntries}=await sb.from('ledger_entries').insert(inserts).select();
+      if(newEntries) ledgerEntries.push(...newEntries);
+    }
   }
   closeOverlay('blockOverlay');
   if(currentView==='week'){renderBlocks();renderNowLine();}else renderMonth();
@@ -910,6 +1024,7 @@ async function deleteBlock(){
   if(!editingBlockId)return;
   await sb.from('blocks').delete().eq('id',editingBlockId);
   blocks=blocks.filter(b=>b.id!==editingBlockId);
+  ledgerEntries=ledgerEntries.filter(e=>e.block_id!==editingBlockId);
   closeOverlay('blockOverlay');
   if(currentView==='week'){renderBlocks();renderNowLine();}else renderMonth();
 }
@@ -941,6 +1056,110 @@ async function archiveTaskFromBlock(){
   if(currentView==='week'){renderBlocks();renderNowLine();}else renderMonth();
 }
 
+// ── BİLANÇO (LEDGER VIEW) ──
+function formatTL(n){
+  const v=Number(n)||0;
+  const abs=Math.abs(v).toLocaleString('tr-TR',{minimumFractionDigits:0,maximumFractionDigits:2});
+  return `${v<0?'−':''}${abs} ₺`;
+}
+function weekOfMonth(dateObj){
+  return Math.ceil(dateObj.getDate()/7);
+}
+function openLedgerModal(){
+  ledgerMonth=new Date();
+  document.getElementById('quickAddAmount').value='';
+  document.getElementById('quickAddNote').value='';
+  quickAddType='gider';
+  document.getElementById('quickAddType').textContent='−';
+  document.getElementById('quickAddType').classList.remove('gelir');
+  renderLedger();
+  openOverlay('ledgerOverlay');
+}
+function changeLedgerMonth(dir){
+  ledgerMonth=new Date(ledgerMonth.getFullYear(),ledgerMonth.getMonth()+dir,1);
+  renderLedger();
+}
+function quickAddDate(){
+  const now=new Date();
+  if(ledgerMonth.getFullYear()===now.getFullYear()&&ledgerMonth.getMonth()===now.getMonth()) return toISO(now);
+  return toISO(new Date(ledgerMonth.getFullYear(),ledgerMonth.getMonth(),1));
+}
+function toggleQuickAddType(){
+  quickAddType=quickAddType==='gelir'?'gider':'gelir';
+  const btn=document.getElementById('quickAddType');
+  btn.textContent=quickAddType==='gelir'?'+':'−';
+  btn.classList.toggle('gelir',quickAddType==='gelir');
+}
+async function quickAddLedgerEntry(){
+  const raw=document.getElementById('quickAddAmount').value;
+  const val=parseFloat(raw);
+  if(!val||val<=0) return;
+  const amount=quickAddType==='gelir'?Math.abs(val):-Math.abs(val);
+  const note=document.getElementById('quickAddNote').value.trim()||null;
+  const payload={block_id:null,entry_date:quickAddDate(),amount,note};
+  const {data,error}=await sb.from('ledger_entries').insert(payload).select().single();
+  if(error){alert('Hata: '+error.message);return;}
+  ledgerEntries.push(data);
+  document.getElementById('quickAddAmount').value='';
+  document.getElementById('quickAddNote').value='';
+  renderLedger();
+}
+async function deleteLedgerEntry(id){
+  if(!confirm('Bu kaydı sil?')) return;
+  await sb.from('ledger_entries').delete().eq('id',id);
+  ledgerEntries=ledgerEntries.filter(e=>e.id!==id);
+  renderLedger();
+}
+function ledgerRowHtml(e){
+  const block=e.block_id?blocks.find(b=>b.id===e.block_id):null;
+  const task=block?tasks.find(t=>t.id===block.task_id):null;
+  const label=e.note||(task?task.title:'—');
+  const d=new Date(e.entry_date+'T12:00:00');
+  const dateShort=d.toLocaleDateString('tr-TR',{day:'numeric',month:'short'});
+  const amt=Number(e.amount);
+  return `<div class="ledger-entry-row">
+    <span class="ledger-entry-date">${dateShort}</span>
+    <span class="ledger-entry-note">${label}${task&&e.note?` <span class="ledger-entry-tag">· ${task.title}</span>`:''}</span>
+    <span class="ledger-entry-amount ${amt>=0?'positive':'negative'}">${formatTL(amt)}</span>
+    <button class="ledger-row-del" onclick="deleteLedgerEntry('${e.id}')">✕</button>
+  </div>`;
+}
+function renderLedger(){
+  document.getElementById('ledgerMonthLabel').textContent=`${MONTHS[ledgerMonth.getMonth()]} ${ledgerMonth.getFullYear()}`;
+  const y=ledgerMonth.getFullYear(),m=ledgerMonth.getMonth();
+  const monthEntries=ledgerEntries.filter(e=>{
+    if(!e.entry_date) return false;
+    const d=new Date(e.entry_date+'T12:00:00');
+    return d.getFullYear()===y&&d.getMonth()===m;
+  }).sort((a,b)=>a.entry_date.localeCompare(b.entry_date));
+  const total=monthEntries.reduce((s,e)=>s+Number(e.amount),0);
+  const totalEl=document.getElementById('ledgerTotal');
+  totalEl.textContent=formatTL(total);
+  totalEl.className='ledger-total '+(total>=0?'positive':'negative');
+  const weeksEl=document.getElementById('ledgerWeeks');
+  if(!monthEntries.length){
+    weeksEl.innerHTML=`<div class="ledger-empty">Bu ay için henüz kayıt yok.</div>`;
+    return;
+  }
+  const weeksMap=new Map();
+  monthEntries.forEach(e=>{
+    const d=new Date(e.entry_date+'T12:00:00');
+    const w=weekOfMonth(d);
+    if(!weeksMap.has(w)) weeksMap.set(w,[]);
+    weeksMap.get(w).push(e);
+  });
+  let html='';
+  [...weeksMap.keys()].sort((a,b)=>a-b).forEach(w=>{
+    const rows=weeksMap.get(w);
+    const subtotal=rows.reduce((s,e)=>s+Number(e.amount),0);
+    html+=`<div class="ledger-week-group">
+      <div class="ledger-week-head"><span>Hafta ${w}</span><span class="${subtotal>=0?'positive':'negative'}">${formatTL(subtotal)}</span></div>
+      ${rows.map(ledgerRowHtml).join('')}
+    </div>`;
+  });
+  weeksEl.innerHTML=html;
+}
+
 // ── COLOR ROW ──
 function renderColorRow(cid,sel){
   document.getElementById(cid).innerHTML=COLORS.map(c=>`<div class="color-swatch${c===sel?' selected':''}" style="background:${c}" data-color="${c}" onclick="selectColor('${cid}','${c}',this)"></div>`).join('');
@@ -961,7 +1180,7 @@ function closeIfOutside(e,id){if(e.target.id===id)closeOverlay(id);}
 // ── KEYBOARD ──
 document.addEventListener('keydown',e=>{
   if(e.key==='Shift') shiftPressed=true;
-  if(e.key==='Escape'){['taskOverlay','subtaskOverlay','blockOverlay'].forEach(closeOverlay);clearSelection();}
+  if(e.key==='Escape'){['taskOverlay','subtaskOverlay','blockOverlay','ledgerOverlay'].forEach(closeOverlay);clearSelection();}
 });
 document.addEventListener('keyup',e=>{if(e.key==='Shift') shiftPressed=false;});
 
