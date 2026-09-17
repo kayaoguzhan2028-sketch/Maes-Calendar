@@ -272,73 +272,9 @@ body { background: var(--bg); color: var(--text); font-family: 'Space Grotesk', 
   .legend-backdrop.open { display: block; }
 }
 
-/* GİRİŞ EKRANI TASARIMI */
-#authOverlay {
-  position: fixed;
-  inset: 0;
-  background: var(--bg);
-  z-index: 9999;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-direction: column;
-  gap: 20px;
-}
-.auth-card {
-  background: var(--s1);
-  padding: 40px;
-  border-radius: 12px;
-  border: 1px solid var(--border);
-  text-align: center;
-  width: 100%;
-  max-width: 320px;
-}
-.auth-title {
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 14px;
-  color: var(--accent);
-  margin-bottom: 20px;
-  letter-spacing: 2px;
-  text-transform: uppercase;
-}
-.auth-input {
-  width: 100%;
-  background: var(--s3);
-  border: 1px solid var(--border);
-  padding: 12px;
-  color: white;
-  text-align: center;
-  font-size: 18px;
-  border-radius: 8px;
-  margin-bottom: 15px;
-  outline: none;
-}
-.auth-input:focus {
-  border-color: var(--accent);
-}
-.auth-btn {
-  background: var(--accent);
-  color: #000;
-  border: none;
-  padding: 12px;
-  width: 100%;
-  border-radius: 8px;
-  font-weight: 600;
-  cursor: pointer;
-  font-family: 'Space Grotesk', sans-serif;
-}
 </style>
 </head>
 <body>
-<div id="authOverlay">
-  <div class="auth-card">
-    <img src="logo.png" alt="Logo" style="width: 80px; height: 80px; margin-bottom: 20px; border-radius: 50%;">
-
-    <div class="auth-title">SİSTEME GİRİŞ</div>
-    <input type="password" id="passInput" class="auth-input" placeholder="Şifre Giriniz">
-    <button class="auth-btn" onclick="checkMasterPassword()">GİRİŞ YAP</button>
-  </div>
-</div>
 <div class="drag-ghost" id="dragGhost"></div>
 <div class="select-bar" id="selectBar">
   <span id="selectBarText">0 saat seçili</span>
@@ -480,32 +416,6 @@ body { background: var(--bg); color: var(--text); font-family: 'Space Grotesk', 
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-  // ŞİFRE KONTROLÜ
-const MASTER_PASS = "31131231";
-
-function checkMasterPassword() {
-  const input = document.getElementById('passInput').value;
-  if (input === MASTER_PASS) {
-    document.getElementById('authOverlay').style.display = 'none';
-    sessionStorage.setItem('isLoggedIn', 'true');
-  } else {
-    alert("Hatalı şifre!");
-  }
-}
-
-// Sayfa yenilendiğinde tekrar sormasın istiyorsan (oturum boyu):
-window.onload = function() {
-  if (sessionStorage.getItem('isLoggedIn') === 'true') {
-    document.getElementById('authOverlay').style.display = 'none';
-  }
-}
-
-// Enter tuşuyla girişi sağla
-document.addEventListener('keypress', function (e) {
-  if (e.key === 'Enter' && document.getElementById('authOverlay').style.display !== 'none') {
-    checkMasterPassword();
-  }
-});
 const SUPABASE_URL = 'https://dxgwgenzrebnmwzhwhck.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImR4Z3dnZW56cmVibm13emh3aGNrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY2ODE2MTUsImV4cCI6MjA5MjI1NzYxNX0.6gqao9BkUM-a_ajGc09QFyGMz4yqYlpNMANV8cZb8pA';
 const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
