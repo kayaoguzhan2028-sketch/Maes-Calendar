@@ -232,6 +232,8 @@ body { background: var(--bg); color: var(--text); font-family: 'Space Grotesk', 
   .btn-ledger { padding: 3px 8px; }
   .btn-ledger-amount { font-size: 13px; }
   .ledger-row, .ledger-quick-add { flex-wrap: wrap; }
+  .goal-quick-add { flex-wrap: wrap; }
+  .goal-amount-input { width: 88px; }
   .ledger-note-input { flex: 1 1 100%; }
   .ledger-type-select { width: 100px; }
   #quickAddNote { flex: 1 1 100%; }
@@ -249,6 +251,18 @@ body { background: var(--bg); color: var(--text); font-family: 'Space Grotesk', 
 .lock-btn:disabled { opacity: 0.5; cursor: default; }
 .lock-error { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--neg); letter-spacing: 0.06em; min-height: 16px; text-align: center; }
 @keyframes shake { 0%,100% { transform: translateX(0); } 25% { transform: translateX(-6px); } 75% { transform: translateX(6px); } }
+
+/* HEDEFLER */
+.goal-total { text-align: center; font-size: 38px; font-weight: 700; margin-bottom: 4px; font-family: 'JetBrains Mono', monospace; letter-spacing: -0.01em; }
+.goal-total-label { text-align: center; font-family: 'JetBrains Mono', monospace; font-size: 9px; color: var(--text-dim); text-transform: uppercase; letter-spacing: 0.08em; padding-bottom: 14px; border-bottom: 1px solid var(--border); margin-bottom: 16px; }
+.goal-quick-add { display: flex; gap: 6px; margin-bottom: 14px; align-items: center; }
+.goal-list { max-height: 340px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; }
+.goal-row { display: flex; gap: 6px; align-items: center; }
+.goal-name-input { flex: 1; min-width: 0; }
+.goal-amount-input { width: 104px; flex-shrink: 0; text-align: right; font-family: 'JetBrains Mono', monospace; }
+.goal-row-del { background: none; border: none; color: var(--text-dim); cursor: pointer; font-size: 13px; flex-shrink: 0; padding: 4px 2px; }
+.goal-row-del:hover { color: var(--neg); }
+.goal-empty { text-align: center; font-size: 11px; color: var(--text-dim); padding: 24px 0; }
 
 /* HAMBURGER */
 .btn-hamburger { display: none; background: none; border: 1px solid var(--border); color: var(--text-mid); width: 32px; height: 32px; border-radius: 7px; cursor: pointer; font-size: 16px; align-items: center; justify-content: center; flex-shrink: 0; }
@@ -314,6 +328,10 @@ body { background: var(--bg); color: var(--text); font-family: 'Space Grotesk', 
   <button class="btn-ledger" onclick="openLedgerModal()" title="Bilanço">
     <span class="btn-ledger-text">güncel durum</span>
     <span class="btn-ledger-amount" id="topBalance">0 ₺</span>
+  </button>
+  <button class="btn-ledger" onclick="openGoalsModal()" title="Hedefler">
+    <span class="btn-ledger-text">hedefler</span>
+    <span class="btn-ledger-amount" id="topGoals">0 ₺</span>
   </button>
   <button class="btn-new-task" onclick="openTaskModal()">+ Görev</button>
 </div>
@@ -414,6 +432,24 @@ body { background: var(--bg); color: var(--text); font-family: 'Space Grotesk', 
   </div>
 </div>
 
+<!-- HEDEFLER MODAL -->
+<div class="overlay" id="goalsOverlay" onclick="closeIfOutside(event,'goalsOverlay')">
+  <div class="modal modal-wide">
+    <div class="modal-title-row">
+      <div class="modal-title" style="margin-bottom:0">Hedefler</div>
+      <button class="btn-ghost-icon" onclick="closeOverlay('goalsOverlay')">✕</button>
+    </div>
+    <div class="goal-total" id="goalTotal">0 ₺</div>
+    <div class="goal-total-label">toplam hedef</div>
+    <div class="goal-quick-add">
+      <input class="finput goal-name-input" id="goalAddName" type="text" placeholder="hedef (ör. ayakkabı — Samba OG, 42 numara)" onkeydown="if(event.key==='Enter') addGoal()">
+      <input class="finput goal-amount-input" id="goalAddAmount" type="number" inputmode="decimal" placeholder="0 ₺" onkeydown="if(event.key==='Enter') addGoal()">
+      <button class="btn btn-primary" onclick="addGoal()">Ekle</button>
+    </div>
+    <div class="goal-list" id="goalList"></div>
+  </div>
+</div>
+
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 const SUPABASE_URL = 'https://dxgwgenzrebnmwzhwhck.supabase.co';
@@ -428,7 +464,7 @@ const END_HOUR = 24;
 let HOUR_H = parseInt(getComputedStyle(document.documentElement).getPropertyValue('--hour-h'))||39;
 window.addEventListener('resize',()=>{HOUR_H=parseInt(getComputedStyle(document.documentElement).getPropertyValue('--hour-h'))||39;});
 
-let tasks=[], subtasks=[], blocks=[], ledgerEntries=[];
+let tasks=[], subtasks=[], blocks=[], ledgerEntries=[], goals=[];
 let currentView='week';
 let weekStart=getWeekStart(new Date());
 let currentMonth=new Date();
@@ -456,8 +492,8 @@ function parseTime(str){if(!str)return new Date();return new Date(str.replace(/(
 
 // ── DATA ──
 async function loadAll(){
-  const [t,s,b,l]=await Promise.all([sb.from('tasks').select('*').order('created_at'),sb.from('subtasks').select('*').order('created_at'),sb.from('blocks').select('*'),sb.from('ledger_entries').select('*')]);
-  tasks=t.data||[];subtasks=s.data||[];blocks=b.data||[];ledgerEntries=l.data||[];
+  const [t,s,b,l,g]=await Promise.all([sb.from('tasks').select('*').order('created_at'),sb.from('subtasks').select('*').order('created_at'),sb.from('blocks').select('*'),sb.from('ledger_entries').select('*'),sb.from('goals').select('*').order('created_at')]);
+  tasks=t.data||[];subtasks=s.data||[];blocks=b.data||[];ledgerEntries=l.data||[];goals=g.data||[];
   render();
 }
 
@@ -580,7 +616,7 @@ function renderWeek(){
 }
 
 function renderBlocks(){
-  renderTopBalance();
+  renderTopBalance();renderGoals();
   document.querySelectorAll('.block').forEach(b=>b.remove());
   const weekDates=Array.from({length:7},(_,i)=>toISO(addDays(weekStart,i)));
   blocks.forEach(block=>{
@@ -629,7 +665,7 @@ function renderNowLine(){
 
 // ── MONTHLY ──
 function renderMonth(){
-  renderTopBalance();
+  renderTopBalance();renderGoals();
   const wrap=document.getElementById('calendarWrap');
   const year=currentMonth.getFullYear(),month=currentMonth.getMonth();
   const today=toISO(new Date());
@@ -1022,6 +1058,59 @@ async function archiveTaskFromBlock(){
   if(currentView==='week'){renderBlocks();renderNowLine();}else renderMonth();
 }
 
+// ── HEDEFLER ──
+function esc(v){return String(v==null?'':v).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;');}
+function openGoalsModal(){
+  document.getElementById('goalAddName').value='';
+  document.getElementById('goalAddAmount').value='';
+  renderGoals();
+  openOverlay('goalsOverlay');
+  setTimeout(()=>document.getElementById('goalAddName').focus(),50);
+}
+function renderGoals(){
+  const total=goals.reduce((s,g)=>s+Number(g.amount||0),0);
+  const topEl=document.getElementById('topGoals');
+  if(topEl) topEl.textContent=formatTL(total);
+  const totalEl=document.getElementById('goalTotal');
+  if(totalEl) totalEl.textContent=formatTL(total);
+  const el=document.getElementById('goalList');
+  if(!el) return;
+  if(!goals.length){el.innerHTML=`<div class="goal-empty">Henüz hedef yok.</div>`;return;}
+  el.innerHTML=goals.map(g=>`<div class="goal-row">
+    <input class="finput goal-name-input" type="text" placeholder="hedef" value="${esc(g.name)}" onchange="updateGoal('${g.id}','name',this.value)">
+    <input class="finput goal-amount-input" type="number" inputmode="decimal" placeholder="0" value="${esc(g.amount)}" onchange="updateGoal('${g.id}','amount',this.value)">
+    <button class="goal-row-del" onclick="deleteGoal('${g.id}')" title="Sil">✕</button>
+  </div>`).join('');
+}
+async function addGoal(){
+  const name=document.getElementById('goalAddName').value.trim();
+  const amount=parseFloat(document.getElementById('goalAddAmount').value)||0;
+  if(!name&&!amount) return;
+  const {data,error}=await sb.from('goals').insert({name,amount}).select().single();
+  if(error){alert('Hata: '+error.message);return;}
+  goals.push(data);
+  document.getElementById('goalAddName').value='';
+  document.getElementById('goalAddAmount').value='';
+  renderGoals();
+  document.getElementById('goalAddName').focus();
+}
+async function updateGoal(id,field,val){
+  const g=goals.find(x=>x.id===id);
+  if(!g) return;
+  const value=field==='amount'?(parseFloat(val)||0):val;
+  g[field]=value;
+  renderGoals();
+  const {error}=await sb.from('goals').update({[field]:value}).eq('id',id);
+  if(error) alert('Hata: '+error.message);
+}
+async function deleteGoal(id){
+  if(!confirm('Bu hedefi sil?')) return;
+  const {error}=await sb.from('goals').delete().eq('id',id);
+  if(error){alert('Hata: '+error.message);return;}
+  goals=goals.filter(g=>g.id!==id);
+  renderGoals();
+}
+
 // ── BİLANÇO (LEDGER VIEW) ──
 function formatTL(n){
   const v=Number(n)||0;
@@ -1159,7 +1248,7 @@ function closeIfOutside(e,id){if(e.target.id===id)closeOverlay(id);}
 // ── KEYBOARD ──
 document.addEventListener('keydown',e=>{
   if(e.key==='Shift') shiftPressed=true;
-  if(e.key==='Escape'){['taskOverlay','subtaskOverlay','blockOverlay','ledgerOverlay'].forEach(closeOverlay);clearSelection();}
+  if(e.key==='Escape'){['taskOverlay','subtaskOverlay','blockOverlay','ledgerOverlay','goalsOverlay'].forEach(closeOverlay);clearSelection();}
 });
 document.addEventListener('keyup',e=>{if(e.key==='Shift') shiftPressed=false;});
 
